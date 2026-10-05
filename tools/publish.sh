@@ -17,11 +17,12 @@ declare -A NUMBER PARENT ESTADO CHILDREN CLOSED
 orderload() { :; }
 
 touch "$MAP"
-while IFS=$'\t' read -r rel num parent estado; do
-  [ -z "${rel:-}" ] && continue
-  NUMBER["$rel"]="$num"
-  PARENT["$rel"]="${parent:-}"
-  ESTADO["$rel"]="${estado:-}"
+while IFS= read -r raw; do
+  [ -z "$raw" ] && continue
+  rel="${raw%%$'\t'*}"; r1="${raw#*$'\t'}"
+  num="${r1%%$'\t'*}"; r2="${r1#*$'\t'}"
+  parent="${r2%%$'\t'*}"; estado="${r2#*$'\t'}"
+  NUMBER["$rel"]="$num"; PARENT["$rel"]="${parent:-}"; ESTADO["$rel"]="${estado:-}"
 done < "$MAP"
 
 item_labels() { # file

@@ -10,8 +10,11 @@ log() { printf '%s\n' "$*"; }
 meta() { grep -m1 -F "**${2}:**" "$1" | sed -E 's/^- \*\*[^*]*:\*\*[[:space:]]*//' | tr -d '*'; }
 
 declare -A NUMBER PARENT ESTADO CHILDREN CLOSED
-while IFS=$'\t' read -r rel num parent estado; do
-  [ -z "${rel:-}" ] && continue
+while IFS= read -r raw; do
+  [ -z "$raw" ] && continue
+  rel="${raw%%$'\t'*}"; r1="${raw#*$'\t'}"
+  num="${r1%%$'\t'*}"; r2="${r1#*$'\t'}"
+  parent="${r2%%$'\t'*}"; estado="${r2#*$'\t'}"
   NUMBER["$rel"]="$num"; PARENT["$rel"]="${parent:-}"; ESTADO["$rel"]="${estado:-}"
 done < "$MAP"
 
@@ -69,6 +72,8 @@ for rel in "${!NUMBER[@]}"; do
   pid="$(node_id "$pn")"; cid="$(node_id "$cn")"
   if gh api graphql -f query='mutation($p:ID!,$c:ID!){ addSubIssue(input:{issueId:$p, subIssueId:$c}){ subIssue { number } } }' -f p="$pid" -f c="$cid" >/dev/null 2>&1; then
     log "  link #$cn -> #$pn"
+  else
+    log "  ERROR o ya existente #$cn -> #$pn"
   fi
 done
 
